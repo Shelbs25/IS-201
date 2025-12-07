@@ -1,0 +1,23 @@
+body {
+    background-color: rgb(247, 222, 245);
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color: black;
+}
+
+/* Center header and images */
+.header { 
+    text-align: center;
+}
+
+/*Border around the parahraph */
+.paragraph {
+    border: 2px solid black;
+    padding: 10px;
+    margin: 20px auto;
+    width: 80%;
+}
+
+/*Indent the list */
+.list {
+    margin-left: 75px;
+}
