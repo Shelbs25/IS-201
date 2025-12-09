@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Rock Paper Scissors - Power Edition</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #86e3ce, #d0e6a5);
+        text-align: center;
+        padding: 40px;
+    }
+
+    h1 { font-size: 2.5rem; margin-bottom: 10px; }
+
+    #game-container {
+        max-width: 650px;
+        margin: auto;
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.25);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Health Bars */
+    .health-section {
+        margin: 20px auto;
+        text-align: left;
+        width: 90%;
+    }
+
+    .label {
+        font-weight: bold;
+        font-size: 1.1rem;
+        margin-bottom: 5px;
+    }
+
+    .healthbar {
+        width: 100%;
+        height: 25px;
+        background: #ddd;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 10px;
+        border: 2px solid #555;
+    }
+
+    .health-fill {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(90deg, #06d6a0, #1b9aaa);
+        transition: width 0.5s ease;
+    }
+
+    /* Choice buttons */
+    .choices button {
+        padding: 15px 25px;
+        font-size: 20px;
+        margin: 10px;
+        border-radius: 10px;
+        border: none;
+        background: #a8dadc;
+        cursor: pointer;
+        transition: 0.15s ease;
+    }
+    .choices button:active { transform: scale(0.85); background: #74c6c8; }
+
+    /* Result animation */
+    #result {
+        font-size: 1.3rem;
+        margin: 20px 0;
+        font-weight: bold;
+        opacity: 0;
+        transition: opacity 0.4s ease;
+    }
+
+    /* Upgrades */
+    #upgrades button {
+        margin: 8px;
+        padding: 12px 18px;
+        font-size: 15px;
+        border-radius: 10px;
+        border: none;
+        background: #ffd166;
+        cursor: pointer;
+        transition: 0.15s;
+    }
+    #upgrades button:hover { transform: scale(1.1); background: #ffbe0b; }
+
+    .active-power { color: #d62839; font-weight: bold; }
+
+    /* GAME OVER SCREEN */
+    #gameover-screen {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.75);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.6s ease;
+    }
+    #gameover-screen.show { opacity: 1; pointer-events: all; }
+
+    #restart-btn {
+        margin-top: 20px;
+        padding: 15px 25px;
+        font-size: 18px;
+        border: none;
+        background: #06d6a0;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+    #restart-btn:hover { background: #05b386; transform: scale(1.1); }
+
+</style>
+</head>
+<body>
+
+<a href="scratch.html">Back to Scratch Page</a>
+
+<h1>Rock Paper Scissors — Power Edition ❤️‍🔥</h1>
+
+<div id="game-container">
+
+    <!-- HEALTH BARS -->
+    <div class="health-section">
+        <div class="label">Player HP</div>
+        <div class="healthbar"><div id="player-health" class="health-fill"></div></div>
+
+        <div class="label">Computer HP</div>
+        <div class="healthbar"><div id="computer-health" class="health-fill"></div></div>
+    </div>
+
+    <div class="choices">
+        <button onclick="play('rock')">🪨 Rock</button>
+        <button onclick="play('paper')">📄 Paper</button>
+        <button onclick="play('scissors')">✂️ Scissors</button>
+    </div>
+
+    <p id="result"></p>
+
+    <h3>Special Moves</h3>
+    <div id="upgrades">
+        <button onclick="activateShield()">🛡️ Shield</button>
+        <button onclick="activateDouble()">⚡ Double (x2)</button>
+        <button onclick="activateMega()">💥 Mega (x3)</button>
+        <button onclick="activateFreeze()">❄️ Freeze</button>
+        <button onclick="activateReversal()">🔄 Reversal</button>
+    </div>
+
+    <p id="power-status"></p>
+
+    <!-- Game Over -->
+    <div id="gameover-screen">
+        <div id="gameover-text"></div>
+        <button id="restart-btn" onclick="restartGame()">Play Again</button>
+    </div>
+</div>
+
+<script>
+let playerHP = 10;
+let computerHP = 10;
+
+let shield = false;
+let doubleAttack = false;
+let megaAttack = false;
+let freeze = false;
+let reversal = false;
+
+function computerChoice() {
+    const c = ["rock", "paper", "scissors"];
+    return c[Math.floor(Math.random() * 3)];
+}
+
+function play(player) {
+    let computer = freeze ? null : computerChoice();
+    freeze = false;
+
+    let msg = "";
+
+    if (!computer) {
+        msg = "❄️ You froze the computer! Free turn!";
+        showResult(msg);
+        return;
+    }
+
+    if (player === computer) {
+        msg = `Tie! You both chose ${player}.`;
+    } else if (
+        (player === "rock" && computer === "scissors") ||
+        (player === "paper" && computer === "rock") ||
+        (player === "scissors" && computer === "paper")
+    ) {
+        let dmg = megaAttack ? 3 : doubleAttack ? 2 : 1;
+        computerHP -= dmg;
+        msg = `You WIN! ${player} beats ${computer}. (–${dmg} enemy HP)`;
+        megaAttack = doubleAttack = false;
+
+    } else {
+        if (shield) {
+            msg = "🛡️ Shield blocked the damage!";
+            shield = false;
+        } else if (reversal) {
+            msg = "🔄 Reversal! Your loss flipped to a WIN! (–1 enemy HP)";
+            computerHP -= 1;
+            reversal = false;
+        } else {
+            computerWins();
+            msg = `You LOSE! ${computer} beats ${player}. (–1 your HP)`;
+        }
+    }
+
+    showResult(msg);
+    updateHealthBars();
+    updatePowerStatus();
+    checkGameOver();
+}
+
+function computerWins() {
+    playerHP -= 1;
+}
+
+function showResult(txt) {
+    let r = document.getElementById("result");
+    r.textContent = txt;
+    r.style.opacity = 0;
+    setTimeout(() => r.style.opacity = 1, 30);
+}
+
+function updateHealthBars() {
+    document.getElementById("player-health").style.width = (playerHP * 10) + "%";
+    document.getElementById("computer-health").style.width = (computerHP * 10) + "%";
+}
+
+function checkGameOver() {
+    if (playerHP <= 0 || computerHP <= 0) {
+        let overlay = document.getElementById("gameover-screen");
+        let text = document.getElementById("gameover-text");
+
+        text.textContent = playerHP > computerHP ? "🎉 YOU WIN!" : "💀 YOU LOST!";
+        overlay.classList.add("show");
+    }
+}
+
+function restartGame() {
+    playerHP = 10;
+    computerHP = 10;
+    resetPowers();
+    updateHealthBars();
+    document.getElementById("gameover-screen").classList.remove("show");
+}
+
+function activateShield(){ resetPowers(); shield = true; updatePowerStatus(); }
+function activateDouble(){ resetPowers(); doubleAttack = true; updatePowerStatus(); }
+function activateMega(){ resetPowers(); megaAttack = true; updatePowerStatus(); }
+function activateFreeze(){ resetPowers(); freeze = true; updatePowerStatus(); }
+function activateReversal(){ resetPowers(); reversal = true; updatePowerStatus(); }
+
+function resetPowers() {
+    shield = doubleAttack = megaAttack = freeze = reversal = false;
+}
+
+function updatePowerStatus() {
+    let p = "Active Power: ";
+    if (shield) p += "<span class='active-power'>🛡️ Shield</span>";
+    else if (doubleAttack) p += "<span class='active-power'>⚡ Double</span>";
+    else if (megaAttack) p += "<span class='active-power'>💥 Mega</span>";
+    else if (freeze) p += "<span class='active-power'>❄️ Freeze</span>";
+    else if (reversal) p += "<span class='active-power'>🔄 Reversal</span>";
+    else p += "None";
+
+    document.getElementById("power-status").innerHTML = p;
+}
+</script>
+
+</body>
+</html>
